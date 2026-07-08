@@ -1,0 +1,56 @@
+name: "english-teacher-platform"
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: ${DB_NAME:-english_teacher}
+      POSTGRES_USER: ${DB_USERNAME:-app}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-app}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: "node:24.18.0-alpine"
+    restart: "unless-stopped"
+    working_dir: /workspace
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/workspace
+      - pnpm-store:/pnpm/store
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${PORT:-3000}
+      PNPM_HOME: /pnpm
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-english_teacher}
+      DB_USERNAME: ${DB_USERNAME:-app}
+      DB_PASSWORD: ${DB_PASSWORD:-app}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -lc "corepack enable && corepack prepare pnpm@11.10.0 --activate && pnpm config set store-dir /pnpm/store && pnpm install --config.confirm-modules-purge=false && pnpm --filter api start:dev"
+
+  node:
+    image: node:24.18.0-alpine
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - pnpm-store:/pnpm/store
+    environment:
+      PNPM_HOME: /pnpm
+    command: sh -lc "corepack enable && corepack prepare pnpm@11.10.0 --activate && pnpm config set store-dir /pnpm/store && pnpm --version" 
+
+volumes:
+  postgres-data:
+  pnpm-store:

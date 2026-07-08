@@ -1,0 +1,14 @@
+{
+    "name": "english-teacher-platform",
+    "version": "0.1.0",
+    "private": true,
+    "description": "MVP student portal for an English teacher",
+    "packageManager": "pnpm@11.10.0",
+    "engines": {
+        "node": ">=24 <25",
+        "pnpm": ">=11.10.0 <12"
+    },
+    "scripts": {
+        "docker:config": "docker compose config"
+    }
+}
